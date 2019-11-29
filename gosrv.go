@@ -23,6 +23,13 @@ func usage() {
 
 }
 
+func errorMsg(msg string, err error) {
+	fmt.Printf(
+		"Error: %s ('%v') exiting program.\n\n",
+		msg, err)
+	os.Exit(0)
+}
+
 func parseArgs() {
 	flag.UintVar(&port, "port", 12345, "The port number to listen on.")
 	flag.BoolVar(&echo, "echo", true, "True if the server should echo the incoming data.")
@@ -94,10 +101,12 @@ func main() {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Panicf("Failed to open listening socket (%s)\n", err)
+		errorMsg("Failed to open listening socket", err)
 	}
 	for {
 		conn, err := ln.Accept()
+		tcpcon := conn.(*net.TCPConn)
+		tcpcon.SetKeepAlive(false)
 		if err != nil {
 			log.Printf("Failed to accept incoming connection (%s)\n", err)
 		}
